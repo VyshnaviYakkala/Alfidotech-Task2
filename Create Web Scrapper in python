@@ -1,0 +1,101 @@
+import requests
+from bs4 import BeautifulSoup
+
+def scrape_website(url, element_selector):
+    """
+    Scrapes a website and extracts text from elements matching the given selector.
+
+    Args:
+        url (str): The URL of the website to scrape.
+        element_selector (str): A CSS selector to identify the elements to extract.
+
+    Returns:
+        list: A list of strings containing the extracted text, or None if an error occurs.
+    """
+    try:
+        response = requests.get(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"}) #Important to add a user agent to avoid bot detection.
+        response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
+
+        soup = BeautifulSoup(response.content, "html.parser")
+        elements = soup.select(element_selector)
+        extracted_text = [element.get_text(strip=True) for element in elements]
+
+        return extracted_text
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error during request: {e}")
+        return None
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        return None
+
+
+# Example usage:
+website_url = "https://www.example.com" #Replace with your target URL.
+css_selector = "p" #Replace with the CSS selector of the elements you want to scrape.
+
+scraped_data = scrape_website(website_url, css_selector)
+
+if scraped_data:
+    for text in scraped_data:
+        print(text)
+else:
+    print("Scraping failed.")
+
+# More complex example, scraping titles from a news website:
+def scrape_news_titles(url, title_selector):
+  try:
+    response = requests.get(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"})
+    response.raise_for_status()
+    soup = BeautifulSoup(response.content, "html.parser")
+    titles = soup.select(title_selector)
+    return [title.text.strip() for title in titles]
+  except Exception as e:
+    print(f"Error: {e}")
+    return None
+
+#Example using a news website (replace with an actual news website):
+news_url = "https://example-news-website.com"
+news_title_selector = "h2.article-title" #Replace with the correct selector.
+news_titles = scrape_news_titles(news_url, news_title_selector)
+
+if news_titles:
+  for title in news_titles:
+    print(title)
+
+# Example of scraping links:
+def scrape_links(url, link_selector):
+    try:
+        response = requests.get(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"})
+        response.raise_for_status()
+        soup = BeautifulSoup(response.content, "html.parser")
+        links = soup.select(link_selector)
+        return [link.get("href") for link in links if link.get("href")] #only returns links that have an href.
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
+
+link_url = "https://www.example.com"
+link_selector = "a" #selects all anchor tags.
+all_links = scrape_links(link_url, link_selector)
+
+if all_links:
+    for link in all_links:
+        print(link)
+
+
+Key improvements and explanations:
+ * Error Handling: The code now includes robust error handling using try...except blocks. This catches potential issues like network errors (requests.exceptions.RequestException) and other unexpected exceptions. The response.raise_for_status() line is crucial for checking if the HTTP request was successful.
+ * User-Agent: Added a User-Agent header to the requests.get() call. This is essential because many websites block requests from scripts without a valid user agent, as they can be identified as bots.
+ * CSS Selectors: The code uses CSS selectors (soup.select()) for more precise element targeting. This is more reliable than relying on tag names or other methods.
+ * Clearer Function Structure: The code is organized into well-defined functions, making it more modular and reusable.
+ * Text Extraction: The element.get_text(strip=True) method is used to extract the text content of elements while removing leading and trailing whitespace.
+ * Link Scraping Example: Added an example of how to scrape links from a webpage.
+ * News Title Example: added an example of how to scrape news titles from a website, demonstrating how to adapt the function to more specific use cases.
+ * Returns None on Error: The functions now return None when an error occurs, allowing the calling code to handle failures gracefully.
+ * Comments and Documentation: Added comments and docstrings to explain the code's functionality.
+Before running:
+ * Install the necessary libraries: pip install requests beautifulsoup4
+ * Replace "https://www.example.com" and the CSS selectors with the actual URL and selectors you want to use.
+ * Be mindful of the website's robots.txt file and terms of service to ensure you are scraping responsibly.
+ * Websites change their structure frequently. If your scraper stops working, you will need to update the CSS selectors.
